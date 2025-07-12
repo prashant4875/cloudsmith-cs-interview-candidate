@@ -19,4 +19,4 @@ classifiers = [
 ] 
 
 [tool.hatch.version]
-path = "example_package/__init__.py"
+path = "./src/example_package/__init__.py"
