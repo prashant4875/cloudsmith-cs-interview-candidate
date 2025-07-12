@@ -34,6 +34,9 @@ jobs:
 
       - name: Install Cloudsmith CLI
         run: pip install --upgrade cloudsmith-cli
+        
+      - name: Authenticate with Cloudsmith
+        run: cloudsmith login --api-key ${{ secrets.CLOUDSMITH_API_KEY }}
 
       - name: List directory contents
         run: ls -la dist/
