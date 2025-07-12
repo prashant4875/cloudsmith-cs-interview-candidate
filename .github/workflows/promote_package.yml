@@ -74,6 +74,11 @@ jobs:
         with:
           oidc-namespace: ${{ env.CLOUDSMITH_NAMESPACE }}
           oidc-service-slug: ${{ env.CLOUDSMITH_SERVICE_SLUG }}
+          
+      - name: Print webhook payload
+        run: |
+          echo "Webhook payload received:"
+          echo '${{ toJSON(github.event) }}'
 
       - name: Tag package as ready-for-production
         run: |
