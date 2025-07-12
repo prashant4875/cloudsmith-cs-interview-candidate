@@ -3,7 +3,8 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "prashant-test-package"
+name = "example_package"
+dynamic = ["version"]
 
 authors = [
   { name="Example Author", email="author@example.com" },
@@ -16,3 +17,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ] 
+
+[tool.hatch.version]
+path = "example_package/__init__.py"
