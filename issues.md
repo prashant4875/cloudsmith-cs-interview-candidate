@@ -45,62 +45,62 @@
 
 3. Update steps in promote_package.yml to add tag and move artifact to prod repo.
    
-   - name: Find latest valid package in staging
-        id: latest
-        run: |
-          echo "Querying latest valid package in staging repository..."
-
-          PACKAGE_DATA=$(cloudsmith list package \
-            ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }} \
-            -F json)
-
-          # Filter only versioned packages
-          IDENTIFIER=$(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .identifier_perm' | head -n1)
-          PACKAGE_NAME=$(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .name' | head -n1)
-          VERSION=$(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .version' | head -n1)
-
-          if [ -z "$IDENTIFIER" ] || [ "$IDENTIFIER" = "null" ]; then
-            echo "❌ No valid versioned package found in staging."
-            exit 1
-          fi
-
-          echo "✅ Latest valid package: $PACKAGE_NAME:$VERSION"
-          echo "identifier=$IDENTIFIER" >> $GITHUB_OUTPUT
-          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-      - name: Tag latest package as ready-for-production
-        run: |
-          IDENTIFIER="${{ steps.latest.outputs.identifier }}"
-          PACKAGE_NAME="${{ steps.latest.outputs.package_name }}"
-          VERSION="${{ steps.latest.outputs.version }}"
-
-          echo "🏷️ Tagging latest package [$PACKAGE_NAME:$VERSION] with 'ready-for-production' tag."
-          cloudsmith tags add \
-            ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }}/$IDENTIFIER \
-            ready-for-production
-
-      - name: Promote all ready-for-production packages
-        run: |
-          echo "🔍 Finding all packages tagged with ready-for-production..."
-
-          PACKAGE_DATA=$(cloudsmith list package \
-            ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }} \
-            -q "tag:ready-for-production" -F json)
-
-          PACKAGE_COUNT=$(echo "$PACKAGE_DATA" | jq '[.data[] | select(.version != null and .version != "")] | length')
-
-          if [ "$PACKAGE_COUNT" -eq 0 ]; then
-            echo "❌ No valid packages found with ready-for-production tag."
-            exit 1
-          fi
-
-          echo "✅ Found $PACKAGE_COUNT package(s) tagged ready-for-production."
-
-          for IDENTIFIER in $(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .identifier_perm'); do
-            echo "🚀 Promoting package: $IDENTIFIER"
-            cloudsmith mv --yes \
-              ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }}/$IDENTIFIER \
-              ${{ env.CLOUDSMITH_PRODUCTION_REPO }}
-          done
-
+      - name: Find latest valid package in staging
+           id: latest
+           run: |
+             echo "Querying latest valid package in staging repository..."
+   
+             PACKAGE_DATA=$(cloudsmith list package \
+               ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }} \
+               -F json)
+   
+             # Filter only versioned packages
+             IDENTIFIER=$(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .identifier_perm' | head -n1)
+             PACKAGE_NAME=$(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .name' | head -n1)
+             VERSION=$(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .version' | head -n1)
+   
+             if [ -z "$IDENTIFIER" ] || [ "$IDENTIFIER" = "null" ]; then
+               echo "❌ No valid versioned package found in staging."
+               exit 1
+             fi
+   
+             echo "✅ Latest valid package: $PACKAGE_NAME:$VERSION"
+             echo "identifier=$IDENTIFIER" >> $GITHUB_OUTPUT
+             echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+             echo "version=$VERSION" >> $GITHUB_OUTPUT
+   
+         - name: Tag latest package as ready-for-production
+           run: |
+             IDENTIFIER="${{ steps.latest.outputs.identifier }}"
+             PACKAGE_NAME="${{ steps.latest.outputs.package_name }}"
+             VERSION="${{ steps.latest.outputs.version }}"
+   
+             echo "🏷️ Tagging latest package [$PACKAGE_NAME:$VERSION] with 'ready-for-production' tag."
+             cloudsmith tags add \
+               ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }}/$IDENTIFIER \
+               ready-for-production
+   
+         - name: Promote all ready-for-production packages
+           run: |
+             echo "🔍 Finding all packages tagged with ready-for-production..."
+   
+             PACKAGE_DATA=$(cloudsmith list package \
+               ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }} \
+               -q "tag:ready-for-production" -F json)
+   
+             PACKAGE_COUNT=$(echo "$PACKAGE_DATA" | jq '[.data[] | select(.version != null and .version != "")] | length')
+   
+             if [ "$PACKAGE_COUNT" -eq 0 ]; then
+               echo "❌ No valid packages found with ready-for-production tag."
+               exit 1
+             fi
+   
+             echo "✅ Found $PACKAGE_COUNT package(s) tagged ready-for-production."
+   
+             for IDENTIFIER in $(echo "$PACKAGE_DATA" | jq -r '.data[] | select(.version != null and .version != "") | .identifier_perm'); do
+               echo "🚀 Promoting package: $IDENTIFIER"
+               cloudsmith mv --yes \
+                 ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }}/$IDENTIFIER \
+                 ${{ env.CLOUDSMITH_PRODUCTION_REPO }}
+             done
+   
