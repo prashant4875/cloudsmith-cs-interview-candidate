@@ -63,7 +63,7 @@ jobs:
           echo "Finding all packages tagged with ready-for-production..."
 
           PACKAGE_DATA=$(cloudsmith list package ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }} \
-            -q "tags:ready-for-production" -F json)
+            -q "tag:ready-for-production" -F json)
 
           PACKAGE_COUNT=$(echo "$PACKAGE_DATA" | jq '.data | length')
 
