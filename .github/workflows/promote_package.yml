@@ -21,9 +21,9 @@ jobs:
     steps:
       - name: Install Cloudsmith CLI
         uses: cloudsmith-io/cloudsmith-cli-action@v1.0.1
-        with:
-          oidc-namespace: ${{ env.CLOUDSMITH_NAMESPACE }}
-          oidc-service-slug: ${{ env.CLOUDSMITH_SERVICE_SLUG }}
+        # with:
+        #   oidc-namespace: ${{ env.CLOUDSMITH_NAMESPACE }}
+        #   oidc-service-slug: ${{ env.CLOUDSMITH_SERVICE_SLUG }}
           
       - name: Find latest package in staging
         id: latest
