@@ -76,23 +76,34 @@ jobs:
           oidc-namespace: ${{ env.CLOUDSMITH_NAMESPACE }}
           oidc-service-slug: ${{ env.CLOUDSMITH_SERVICE_SLUG }}
           
-      - name: Print webhook payload
+      - name: Find latest package in staging
+        id: latest
         run: |
-          echo "Webhook payload received:"
-          echo '${{ toJSON(github.event) }}'
+          echo "Querying latest package in staging repository..."
 
-      - name: Tag package as ready-for-production
-        run: |
-          IDENTIFIER="${{ github.event.client_payload.identifier }}"
-          PACKAGE_NAME="${{ github.event.client_payload.name }}"
-          VERSION="${{ github.event.client_payload.version }}"
+          PACKAGE_DATA=$(cloudsmith list package ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }} -F json)
+
+          IDENTIFIER=$(echo "$PACKAGE_DATA" | jq -r '.data[0].identifier_perm')
+          PACKAGE_NAME=$(echo "$PACKAGE_DATA" | jq -r '.data[0].name')
+          VERSION=$(echo "$PACKAGE_DATA" | jq -r '.data[0].version')
 
           if [ -z "$IDENTIFIER" ] || [ "$IDENTIFIER" = "null" ]; then
-            echo "Identifier from webhook payload is empty."
+            echo "No package found in staging."
             exit 1
           fi
 
-          echo "Tagging package [$PACKAGE_NAME:$VERSION] with ready-for-production tag."
+          echo "Latest package: $PACKAGE_NAME:$VERSION"
+          echo "identifier=$IDENTIFIER" >> $GITHUB_OUTPUT
+          echo "package_name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Tag latest package as ready-for-production
+        run: |
+          IDENTIFIER="${{ steps.latest.outputs.identifier }}"
+          PACKAGE_NAME="${{ steps.latest.outputs.package_name }}"
+          VERSION="${{ steps.latest.outputs.version }}"
+
+          echo "Tagging latest package [$PACKAGE_NAME:$VERSION] with 'ready-for-production' tag."
           cloudsmith tags add \
             ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }}/$IDENTIFIER \
             ready-for-production
@@ -119,4 +130,3 @@ jobs:
               ${{ env.CLOUDSMITH_NAMESPACE }}/${{ env.CLOUDSMITH_STAGING_REPO }}/$IDENTIFIER \
               ${{ env.CLOUDSMITH_PRODUCTION_REPO }}
           done
-
